@@ -13,7 +13,6 @@ entity Tiendas : cuid {
 }
 
 entity Duenios : cuid {
-
     nombre  : String(111);
     tiendas : Association to many Tiendas_duenios
                   on tiendas.duenio = $self;
@@ -27,6 +26,7 @@ entity Productos : cuid {
     precio  : Association to one Precios;
     marca   : Association to one Marcas;
     subTipo : Association to one Subtipos;
+    cantidad: Integer default 0
 };
 
 
@@ -38,8 +38,7 @@ entity Tipos : cuid {
     nombreTipo : String;
 }
 
-entity Subtipos : cuid {
-    key ID            : UUID;
+entity Subtipos : cuid {    
         nombreSubTipo : String;
         Tipo          : Association to one Tipos;
 
