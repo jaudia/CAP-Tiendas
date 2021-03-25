@@ -29,7 +29,7 @@ service AdminService @(_requires : 'authenticated-user') {
             precio;
 
     action actualizarPrecios(conjuntoProductos : array of Productos) returns String;
-    action setStock(ProductoID : UUID, cantidad : Integer, retira : Boolean) returns String;
+    action setStock(productoID : UUID, cantidad : Integer, retira : Boolean) returns String;
 
 
 }

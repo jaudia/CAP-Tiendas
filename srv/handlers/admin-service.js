@@ -3,9 +3,50 @@ const cds = require('@sap/cds');
 const { Productos, Duenios, Tiendas_duenios } = cds.entities;
 
 
+const getProducto = (idProd) => {
+
+    return new Promise(async (resolve, reject) => {
+
+        await cds.run(SELECT.one(Productos).where({ ID: idProd }))
+            .then(re => {
+                if (!!re)
+                    resolve(re)
+                else
+                    reject('No se encontraron datos')
+            });
+    });
+}
+
+const setearStock = (prod, datos) => {
+
+    return new Promise(async (resolve, reject) => {
+
+        let cantidadNueva = prod.cantidad;
+
+        if (datos.retira)
+            cantidadNueva -= datos.cantidad;
+        else
+            cantidadNueva += datos.cantidad;
+
+        try {
+            console.log(`la cantidad nueva es ${cantidadNueva}`);
+
+            await cds.run(UPDATE(Productos)
+                .set({ cantidad: cantidadNueva })
+                .where({ ID: datos.productoID }));
+
+            resolve('datos actualizados correctamente');
+
+        } catch (error) {
+            console.log(err);
+            reject(error);
+        }
+    })
+};
+
 module.exports = cds.service.impl((srv) => {
 
-    srv.on('actualizarPrecios', (req) => {
+    srv.on('actualizarPrecios', async (req) => {
 
         const datos = req.data;
 
@@ -14,7 +55,7 @@ module.exports = cds.service.impl((srv) => {
             erroneos: []
         };
 
-        new Promise((resolve) => {
+        await new Promise((resolve) => {
 
             datos.conjuntoProductos.forEach(element => {
 
@@ -51,67 +92,21 @@ module.exports = cds.service.impl((srv) => {
 
     });
 
-    srv.on('setStock', (req) => {
+    srv.on('setStock', async (req) => {
 
         const datos = req.data;
 
-        new Promise((resolve, reject) => {
-
-            // console.log(datos);
-
-            cds.run(SELECT.one(Productos).where({ ID: datos.ProductoID }))
-                .then(re => {
-                    if (!!re)
-                        resolve(re)
-                    else
-                        reject('No se encontraron datos')
-
-                    return;
-                });
-
-        })
+        await getProducto(datos.productoID)
             .then(resultado => {
-
-                new Promise((resolve, reject) => {
-
-                    let cantidadNueva = resultado.cantidad;
-
-                    if (datos.retira)
-                        cantidadNueva -= datos.cantidad;
-                    else
-                        cantidadNueva += datos.cantidad;
-
-                    try {
-                        cds.run(UPDATE(Productos)
-                            .set({ cantidad: cantidadNueva })
-                            .where({ ID: datos.ID }));
-
-                        resolve('datos actualizados correctamente');
-                        return;
-
-                    } catch (error) {
-                        console.log('Se produjo un error al actualizar:');
-                        reject(error);
-                        return;
-                    }
-                })
-                    .then(res => {
-                        console.log(res);
-
-                        req.reply(res)
-                    })
-                    .catch(err => {
-                        console.log(err);
-                        req.reply(err)
-                    });
-
-            }).catch(err => {
-                console.log(err);
-                req.reply(JSON.stringify(err));
+                return setearStock(resultado, datos)
+            })
+            .then(resultado => {
+                console.log(resultado);
+                req.reply(resultado)
+            })
+            .catch(err => {
+                req.reject(err);
             });
-
-        return;
-
     });
 
     // PENDIENTE punto 2: agregar tiendas cuando se crea dueño por url.
