@@ -2,6 +2,8 @@ const cds = require('@sap/cds');
 
 const { Productos, Duenios, Tiendas_duenios } = cds.entities;
 
+const cantidadMax = 100;
+const cantidadMin = 0;
 
 const getProducto = (idProd) => {
 
@@ -28,9 +30,17 @@ const setearStock = (prod, datos) => {
         else
             cantidadNueva += datos.cantidad;
 
-        try {
-            console.log(`la cantidad nueva es ${cantidadNueva}`);
+        if (cantidadNueva > cantidadMax) {
+            reject(`Error: Se esta sobrepasando la cantidad maxima: ${cantidadMax}`);
+            return;
+        }
+        else if (cantidadNueva < cantidadMin) {
+            reject(`Error: La cantidad resultante "${cantidadNueva}" es menor a la minima: ${cantidadMin}`);
+            return;
+        };
 
+
+        try {
             await cds.run(UPDATE(Productos)
                 .set({ cantidad: cantidadNueva })
                 .where({ ID: datos.productoID }));
